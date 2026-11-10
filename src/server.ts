@@ -40,6 +40,7 @@ process.on("SIGINT", () => shutdown());
 process.on("SIGTERM", () => shutdown());
 
 process.on("unhandledRejection", (reason: unknown) => {
+  console.log('UNHANDLED REJECTION! 🧨 Shutting down...');
   if (reason instanceof Error) {
     console.error(reason.name, reason.message);
   } else {
@@ -47,6 +48,18 @@ process.on("unhandledRejection", (reason: unknown) => {
   }
   shutdown(1);
 });
+
+process.on('uncaughtException', (error: unknown) => {
+  console.log('UNCAUGHT EXCEPTION! 🧨 Shutting down...');
+
+  if(error instanceof Error) {
+    console.error(error.name, error.message);
+  } else {
+    console.error("Uncaught exception: ", error);
+  }
+
+  shutdown(1);
+})
 
 async function main() {
   await mongoose.connect(getDatabaseUri());
