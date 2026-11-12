@@ -1,6 +1,7 @@
 import type { ErrorRequestHandler, Response } from "express";
 import mongoose from "mongoose";
 import { AppError } from "../utils/appError.js";
+import jwt from "jsonwebtoken";
 
 const sendErrorDev = (error: unknown, res: Response) => {
   const statusCode = error instanceof AppError ? error.statusCode : 500;
@@ -59,6 +60,10 @@ const handleValidationErrorDB = (err: mongoose.Error.ValidationError) => {
   return new AppError(message, 400);
 }
 
+const handleJWTError = () => new AppError('Invalid token. Please log in again!', 401);
+
+const handleJWTExpiredError = () => new AppError('Your token has expired! Please log in again.', 401);
+
 export const globalErrorHandler: ErrorRequestHandler = (
   err: unknown,
   req,
@@ -73,6 +78,8 @@ export const globalErrorHandler: ErrorRequestHandler = (
     if (err instanceof mongoose.Error.CastError) error = handleCastErrorDB(err);
     else if (isDuplicateKeyError(err)) error = handleDuplicateFieldsDB(err);
     else if (err instanceof mongoose.Error.ValidationError) error = handleValidationErrorDB(err);
+    else if (err instanceof jwt.TokenExpiredError) error = handleJWTExpiredError();
+    else if (err instanceof jwt.JsonWebTokenError) error = handleJWTError();
 
     sendErrorProd(error, res);
   }
